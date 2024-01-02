@@ -1,4 +1,5 @@
-﻿using System.Diagnostics.Contracts;
+﻿using System;
+using System.Diagnostics.Contracts;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 using Soenneker.Enums.CosmosContainer;
@@ -9,7 +10,7 @@ namespace Soenneker.Cosmos.Container.Abstract;
 /// A utility library for storing Azure Cosmos containers <para/>
 /// Singleton IoC
 /// </summary>
-public interface ICosmosContainerUtil
+public interface ICosmosContainerUtil : IDisposable, IAsyncDisposable
 {
     /// <inheritdoc cref="GetContainer(string)"/>
     [Pure]

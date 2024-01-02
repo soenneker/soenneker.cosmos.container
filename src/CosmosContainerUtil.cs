@@ -7,6 +7,8 @@ using Soenneker.Cosmos.Client.Abstract;
 using Soenneker.Cosmos.Container.Abstract;
 using Soenneker.Cosmos.Container.Setup.Abstract;
 using Soenneker.Enums.CosmosContainer;
+using Soenneker.Extensions.Task;
+using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.SingletonDictionary;
 
 namespace Soenneker.Cosmos.Container;
@@ -35,7 +37,7 @@ public class CosmosContainerUtil : ICosmosContainerUtil
             var containerName = (string)args[1];
 
             if (_ensureContainerOnFirstUse)
-                _ = await cosmosSetupUtil.EnsureContainer(containerName);
+                _ = await cosmosSetupUtil.EnsureContainer(containerName).NoSync();
 
             Microsoft.Azure.Cosmos.Container container = client.GetContainer(databaseName, containerName);
 
@@ -80,11 +82,25 @@ public class CosmosContainerUtil : ICosmosContainerUtil
     {
         _logger.LogCritical("Deleting container {container}! ...", containerName);
 
-        Microsoft.Azure.Cosmos.Container container = await GetContainer(containerName);
-        await container.DeleteContainerAsync();
+        Microsoft.Azure.Cosmos.Container container = await GetContainer(containerName).NoSync();
+        await container.DeleteContainerAsync().NoSync();
 
-        await _containers.Remove(containerName);
+        await _containers.Remove(containerName).NoSync();
 
         _logger.LogWarning("Finished deleting container {container}", containerName);
+    }
+
+    public void Dispose()
+    {
+        GC.SuppressFinalize(this);
+
+        _containers.Dispose();
+    }
+
+    public ValueTask DisposeAsync()
+    {
+        GC.SuppressFinalize(this);
+
+        return _containers.DisposeAsync();
     }
 }
