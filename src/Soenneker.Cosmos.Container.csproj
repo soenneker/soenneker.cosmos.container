@@ -38,7 +38,7 @@
         <None Include="..\icon.png" Pack="true" PackagePath="\" />
 
         
-        <PackageReference Include="Soenneker.Cosmos.Container.Setup" Version="2.1.414" />
+        <PackageReference Include="Soenneker.Cosmos.Container.Setup" Version="2.1.415" />
         <PackageReference Include="Soenneker.Enums.CosmosContainer" Version="2.1.142" />
     </ItemGroup>
 </Project>
