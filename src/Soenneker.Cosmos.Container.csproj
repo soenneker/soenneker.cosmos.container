@@ -39,6 +39,6 @@
 
         
         <PackageReference Include="Soenneker.Cosmos.Container.Setup" Version="2.1.503" />
-        <PackageReference Include="Soenneker.Enums.CosmosContainer" Version="2.1.170" />
+        <PackageReference Include="Soenneker.Enums.CosmosContainer" Version="2.1.171" />
     </ItemGroup>
 </Project>
