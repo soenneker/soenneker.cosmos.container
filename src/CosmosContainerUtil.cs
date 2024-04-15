@@ -31,7 +31,7 @@ public class CosmosContainerUtil : ICosmosContainerUtil
 
         _containers = new SingletonDictionary<Microsoft.Azure.Cosmos.Container>(async args =>
         {
-            CosmosClient client = await cosmosClientUtil.GetClient();
+            CosmosClient client = await cosmosClientUtil.GetClient().NoSync();
 
             var databaseName = (string)args![0];
             var containerName = (string)args[1];
