@@ -10,12 +10,9 @@ namespace Soenneker.Cosmos.Container.Registrars;
 /// </summary>
 public static class CosmosContainerUtilRegistrar
 {
-    /// <summary>
-    /// As Singleton
-    /// </summary>
-    public static void AddCosmosContainerUtil(this IServiceCollection services)
+    public static void AddCosmosContainerUtilAsSingleton(this IServiceCollection services)
     {
-        services.AddCosmosContainerSetupUtil();
+        services.AddCosmosContainerSetupUtilAsSingleton();
         services.TryAddSingleton<ICosmosContainerUtil, CosmosContainerUtil>();
     }
 }
