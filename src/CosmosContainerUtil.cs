@@ -6,6 +6,7 @@ using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.Client.Abstract;
 using Soenneker.Cosmos.Container.Abstract;
 using Soenneker.Cosmos.Container.Setup.Abstract;
+using Soenneker.Extensions.Configuration;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
 using Soenneker.Utils.SingletonDictionary;
@@ -46,8 +47,8 @@ public class CosmosContainerUtil : ICosmosContainerUtil
 
     private void SetConfiguration(IConfiguration config)
     {
-        _ensureContainerOnFirstUse = config.GetValue<bool>("Azure:Cosmos:EnsureContainerOnFirstUse");
-        _databaseName = config.GetValue<string>("Azure:Cosmos:DatabaseName");
+        _ensureContainerOnFirstUse = config.GetValueStrict<bool>("Azure:Cosmos:EnsureContainerOnFirstUse");
+        _databaseName = config.GetValueStrict<string>("Azure:Cosmos:DatabaseName");
 
         if (_databaseName == null)
             throw new Exception("Azure:Cosmos:DatabaseName is required");
