@@ -32,12 +32,12 @@ public class CosmosContainerUtil : ICosmosContainerUtil
 
         _containers = new SingletonDictionary<Microsoft.Azure.Cosmos.Container>(async (containerName, token, args) =>
         {
-            CosmosClient client = await cosmosClientUtil.Get().NoSync();
+            CosmosClient client = await cosmosClientUtil.Get(token).NoSync();
 
             var databaseName = (string)args[0];
 
             if (_ensureContainerOnFirstUse)
-                _ = await cosmosContainerSetupUtil.Ensure(containerName).NoSync();
+                _ = await cosmosContainerSetupUtil.Ensure(containerName, token).NoSync();
 
             Microsoft.Azure.Cosmos.Container container = client.GetContainer(databaseName, containerName);
 
