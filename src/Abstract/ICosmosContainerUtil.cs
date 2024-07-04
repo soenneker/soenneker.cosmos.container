@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Diagnostics.Contracts;
+using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
 
@@ -15,10 +16,10 @@ public interface ICosmosContainerUtil : IDisposable, IAsyncDisposable
     /// Implements double check locking mechanism
     /// </summary>
     [Pure]
-    ValueTask<Microsoft.Azure.Cosmos.Container> Get(string containerName);
+    ValueTask<Microsoft.Azure.Cosmos.Container> Get(string containerName, CancellationToken cancellationToken = default);
 
     [Pure]
-    ValueTask<Microsoft.Azure.Cosmos.Container> Get(string containerName, CosmosClient cosmosClient, string databaseName);
+    ValueTask<Microsoft.Azure.Cosmos.Container> Get(string containerName, CosmosClient cosmosClient, string databaseName, CancellationToken cancellationToken = default);
 
-    ValueTask Delete(string containerName);
+    ValueTask Delete(string containerName, CancellationToken cancellationToken = default);
 }
