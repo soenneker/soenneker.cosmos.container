@@ -21,34 +21,28 @@ public class CosmosContainerUtil : ICosmosContainerUtil
 
     private readonly SingletonDictionary<Microsoft.Azure.Cosmos.Container> _containers;
 
-    private bool _ensureContainerOnFirstUse;
-    private string? _databaseName;
+    private readonly string? _databaseName;
 
     public CosmosContainerUtil(ICosmosClientUtil cosmosClientUtil, ICosmosContainerSetupUtil cosmosContainerSetupUtil, IConfiguration config, ILogger<CosmosContainerUtil> logger)
     {
         _logger = logger;
 
-        SetConfiguration(config);
+        var ensureContainerOnFirstUse = config.GetValueStrict<bool>("Azure:Cosmos:EnsureContainerOnFirstUse");
+        _databaseName = config.GetValueStrict<string>("Azure:Cosmos:DatabaseName");
 
-        _containers = new SingletonDictionary<Microsoft.Azure.Cosmos.Container>(async (containerName, token, args) =>
+        _containers = new SingletonDictionary<Microsoft.Azure.Cosmos.Container>(async (containerName, cancellationToken, args) =>
         {
-            CosmosClient client = await cosmosClientUtil.Get(token).NoSync();
+            CosmosClient client = await cosmosClientUtil.Get(cancellationToken).NoSync();
 
             var databaseName = (string)args[0];
 
-            if (_ensureContainerOnFirstUse)
-                _ = await cosmosContainerSetupUtil.Ensure(containerName, token).NoSync();
+            if (ensureContainerOnFirstUse)
+                _ = await cosmosContainerSetupUtil.Ensure(containerName, cancellationToken).NoSync();
 
             Microsoft.Azure.Cosmos.Container container = client.GetContainer(databaseName, containerName);
 
             return container;
         });
-    }
-
-    private void SetConfiguration(IConfiguration config)
-    {
-        _ensureContainerOnFirstUse = config.GetValueStrict<bool>("Azure:Cosmos:EnsureContainerOnFirstUse");
-        _databaseName = config.GetValueStrict<string>("Azure:Cosmos:DatabaseName");
     }
 
     public ValueTask<Microsoft.Azure.Cosmos.Container> Get(string containerName, CancellationToken cancellationToken = default)
