@@ -39,9 +39,7 @@ public class CosmosContainerUtil : ICosmosContainerUtil
             if (ensureContainerOnFirstUse)
                 _ = await cosmosContainerSetupUtil.Ensure(containerName, cancellationToken).NoSync();
 
-            Microsoft.Azure.Cosmos.Container container = client.GetContainer(databaseName, containerName);
-
-            return container;
+            return client.GetContainer(databaseName, containerName);
         });
     }
 
