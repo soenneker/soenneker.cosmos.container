@@ -15,7 +15,7 @@ using Soenneker.Utils.SingletonDictionary;
 namespace Soenneker.Cosmos.Container;
 
 /// <inheritdoc cref="ICosmosContainerUtil"/>
-public class CosmosContainerUtil : ICosmosContainerUtil
+public sealed class CosmosContainerUtil : ICosmosContainerUtil
 {
     private readonly ILogger<CosmosContainerUtil> _logger;
 
