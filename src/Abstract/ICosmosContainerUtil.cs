@@ -12,6 +12,9 @@ namespace Soenneker.Cosmos.Container.Abstract;
 /// </summary>
 public interface ICosmosContainerUtil : IDisposable, IAsyncDisposable
 {
+    [Pure]
+    ValueTask<Microsoft.Azure.Cosmos.Container> Get(string databaseName, string containerName, CancellationToken cancellationToken = default);
+
     /// <summary>
     /// Implements double check locking mechanism
     /// </summary>
@@ -19,7 +22,10 @@ public interface ICosmosContainerUtil : IDisposable, IAsyncDisposable
     ValueTask<Microsoft.Azure.Cosmos.Container> Get(string containerName, CancellationToken cancellationToken = default);
 
     [Pure]
-    ValueTask<Microsoft.Azure.Cosmos.Container> Get(string containerName, CosmosClient cosmosClient, string databaseName, CancellationToken cancellationToken = default);
+    ValueTask<Microsoft.Azure.Cosmos.Container> Get(string databaseName, string containerName, CosmosClient cosmosClient,
+        CancellationToken cancellationToken = default);
 
     ValueTask Delete(string containerName, CancellationToken cancellationToken = default);
+
+    ValueTask Delete(string databaseName, string containerName, CancellationToken cancellationToken = default);
 }
