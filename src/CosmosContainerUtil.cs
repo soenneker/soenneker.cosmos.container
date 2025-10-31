@@ -28,54 +28,58 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
 
         _containers = new SingletonDictionary<Microsoft.Azure.Cosmos.Container>(async (key, cancellationToken, args) =>
         {
-            CosmosClient client = await cosmosClientUtil.Get(cancellationToken).NoSync();
+            var endpoint = (string)args[0];
+            var accountKey = (string)args[1];
+            var databaseName = (string)args[2];
+            var containerName = (string)args[3];
 
-            var databaseName = (string)args[0];
-            var containerName = (string)args[1];
+            CosmosClient client = await cosmosClientUtil.Get(endpoint, accountKey, cancellationToken).NoSync();
 
-            var ensureContainerOnFirstUse = config.GetValue<bool?>("Azure:Cosmos:EnsureContainerOnFirstUse");
+            bool ensureContainerOnFirstUse = config.GetValue("Azure:Cosmos:EnsureContainerOnFirstUse", true);
 
-            if (ensureContainerOnFirstUse == null || ensureContainerOnFirstUse.Value)
+            if (ensureContainerOnFirstUse)
             {
-                _ = await cosmosContainerSetupUtil.Ensure(databaseName, containerName, cancellationToken).NoSync();
+                _ = await cosmosContainerSetupUtil.Ensure(endpoint, accountKey, databaseName, containerName, cancellationToken).NoSync();
             }
 
             return client.GetContainer(databaseName, containerName);
         });
     }
 
-    public ValueTask<Microsoft.Azure.Cosmos.Container> Get(string databaseName, string containerName, CancellationToken cancellationToken = default)
+    public ValueTask<Microsoft.Azure.Cosmos.Container> Get(string endpoint, string accountKey, string databaseName, string containerName, CancellationToken cancellationToken = default)
     {
-        var key = $"{databaseName}-{containerName}";
+        var key = $"{endpoint}-{databaseName}-{containerName}";
 
-        return _containers.Get(key, cancellationToken, databaseName, containerName);
+        return _containers.Get(key, cancellationToken,endpoint, accountKey, databaseName, containerName);
     }
 
     public ValueTask<Microsoft.Azure.Cosmos.Container> Get(string containerName, CancellationToken cancellationToken = default)
     {
+        var endpoint = _config.GetValueStrict<string>("Azure:Cosmos:Endpoint");
+        var accountKey = _config.GetValueStrict<string>("Azure:Cosmos:AccountKey");
         var databaseName = _config.GetValueStrict<string>("Azure:Cosmos:DatabaseName");
 
-        return Get(databaseName, containerName, cancellationToken);
+        return Get(endpoint, accountKey, databaseName, containerName, cancellationToken);
     }
 
-    public ValueTask<Microsoft.Azure.Cosmos.Container> Get(string databaseName, string containerName, CosmosClient cosmosClient,
+    public ValueTask<Microsoft.Azure.Cosmos.Container> Get(string endpoint, string accountKey, string databaseName, string containerName, CosmosClient cosmosClient,
         CancellationToken cancellationToken = default)
     {
         int hashOfClient = cosmosClient.GetHashCode();
 
-        var key = $"{databaseName}-{containerName}-{hashOfClient}";
+        var key = $"{endpoint}-{databaseName}-{containerName}-{hashOfClient}";
 
         return _containers.Get(key, cancellationToken, databaseName, containerName);
     }
 
-    public async ValueTask Delete(string databaseName, string containerName, CancellationToken cancellationToken = default)
+    public async ValueTask Delete(string endpoint, string accountKey, string databaseName, string containerName, CancellationToken cancellationToken = default)
     {
         _logger.LogCritical("Deleting container {container} in {database}! ...", containerName, databaseName);
 
-        Microsoft.Azure.Cosmos.Container container = await Get(databaseName, containerName, cancellationToken).NoSync();
+        Microsoft.Azure.Cosmos.Container container = await Get(endpoint, accountKey, databaseName, containerName, cancellationToken).NoSync();
         await container.DeleteContainerAsync(cancellationToken: cancellationToken).NoSync();
 
-        var key = $"{databaseName}-{containerName}";
+        var key = $"{endpoint}-{databaseName}-{containerName}";
 
         await _containers.Remove(key, cancellationToken).NoSync();
 
@@ -84,9 +88,11 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
 
     public ValueTask Delete(string containerName, CancellationToken cancellationToken = default)
     {
+        var endpoint = _config.GetValueStrict<string>("Azure:Cosmos:Endpoint");
+        var accountKey = _config.GetValueStrict<string>("Azure:Cosmos:AccountKey");
         var databaseName = _config.GetValueStrict<string>("Azure:Cosmos:DatabaseName");
 
-        return Delete(databaseName, containerName, cancellationToken);
+        return Delete(endpoint, accountKey, databaseName, containerName, cancellationToken);
     }
 
     public void Dispose()
