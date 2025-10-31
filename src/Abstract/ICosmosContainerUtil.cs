@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.Diagnostics.Contracts;
 using System.Threading;
 using System.Threading.Tasks;
@@ -28,4 +29,14 @@ public interface ICosmosContainerUtil : IDisposable, IAsyncDisposable
     ValueTask Delete(string containerName, CancellationToken cancellationToken = default);
 
     ValueTask Delete(string endpoint, string accountKey, string databaseName, string containerName, CancellationToken cancellationToken = default);
+
+    [Pure]
+    ValueTask<IReadOnlyList<ContainerProperties>> GetAll(CancellationToken cancellationToken = default);
+
+    [Pure]
+    ValueTask<IReadOnlyList<ContainerProperties>> GetAll(string endpoint, string accountKey, string databaseName, CancellationToken cancellationToken = default);
+
+    ValueTask DeleteAll(CancellationToken cancellationToken = default);
+
+    ValueTask DeleteAll(string endpoint, string accountKey, string databaseName, CancellationToken cancellationToken = default);
 }
