@@ -117,7 +117,7 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
                                                                       .NoSync();
 
         var containers = new List<ContainerProperties>();
-        FeedIterator<ContainerProperties>? iterator = database.GetContainerQueryIterator<ContainerProperties>();
+        using FeedIterator<ContainerProperties>? iterator = database.GetContainerQueryIterator<ContainerProperties>();
 
         while (iterator.HasMoreResults)
         {
