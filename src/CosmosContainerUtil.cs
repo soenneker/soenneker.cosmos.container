@@ -22,6 +22,9 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
     private readonly ILogger<CosmosContainerUtil> _logger;
     private readonly IConfiguration _config;
     private readonly ICosmosDatabaseUtil _databaseUtil;
+    private readonly ICosmosClientUtil _cosmosClientUtil;
+    private readonly ICosmosContainerSetupUtil _cosmosContainerSetupUtil;
+    private readonly bool _ensureContainerOnFirstUse;
 
     private readonly SingletonDictionary<Microsoft.Azure.Cosmos.Container, CosmosContainerArgs> _containers;
 
@@ -31,22 +34,25 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
         _logger = logger;
         _config = config;
         _databaseUtil = databaseUtil;
+        _cosmosClientUtil = cosmosClientUtil;
+        _cosmosContainerSetupUtil = cosmosContainerSetupUtil;
+        _ensureContainerOnFirstUse = config.GetValue("Azure:Cosmos:EnsureContainerOnFirstUse", true);
 
-        _containers = new SingletonDictionary<Microsoft.Azure.Cosmos.Container, CosmosContainerArgs>(async (key, cancellationToken, args) =>
+        _containers = new SingletonDictionary<Microsoft.Azure.Cosmos.Container, CosmosContainerArgs>(CreateContainer);
+    }
+
+    private async ValueTask<Microsoft.Azure.Cosmos.Container> CreateContainer(string key, CancellationToken cancellationToken, CosmosContainerArgs args)
+    {
+        CosmosClient client = await _cosmosClientUtil.Get(args.Endpoint, args.AccountKey, cancellationToken)
+                                                     .NoSync();
+
+        if (_ensureContainerOnFirstUse)
         {
-            CosmosClient client = await cosmosClientUtil.Get(args.Endpoint, args.AccountKey, cancellationToken)
-                                                        .NoSync();
+            _ = await _cosmosContainerSetupUtil.Ensure(args.Endpoint, args.AccountKey, args.DatabaseName, args.ContainerName, cancellationToken)
+                                               .NoSync();
+        }
 
-            bool ensureContainerOnFirstUse = config.GetValue("Azure:Cosmos:EnsureContainerOnFirstUse", true);
-
-            if (ensureContainerOnFirstUse)
-            {
-                _ = await cosmosContainerSetupUtil.Ensure(args.Endpoint, args.AccountKey, args.DatabaseName, args.ContainerName, cancellationToken)
-                                                  .NoSync();
-            }
-
-            return client.GetContainer(args.DatabaseName, args.ContainerName);
-        });
+        return client.GetContainer(args.DatabaseName, args.ContainerName);
     }
 
     public ValueTask<Microsoft.Azure.Cosmos.Container> Get(string endpoint, string accountKey, string databaseName, string containerName,
