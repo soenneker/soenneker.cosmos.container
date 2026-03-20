@@ -6,6 +6,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 using Soenneker.Cosmos.Client.Abstract;
 using Soenneker.Cosmos.Container.Abstract;
+using Soenneker.Cosmos.Container.Dtos;
 using Soenneker.Cosmos.Container.Setup.Abstract;
 using Soenneker.Cosmos.Container.Utils;
 using Soenneker.Cosmos.Database.Abstract;
