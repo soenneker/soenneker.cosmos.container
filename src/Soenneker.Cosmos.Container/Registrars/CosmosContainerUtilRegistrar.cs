@@ -11,10 +11,10 @@ namespace Soenneker.Cosmos.Container.Registrars;
 public static class CosmosContainerUtilRegistrar
 {
     /// <summary>
-    /// Adds cosmos container util as singleton.
+    /// Registers Cosmos Container Util with a singleton lifetime.
     /// </summary>
-    /// <param name="services">The service collection.</param>
-    /// <returns>The result of the operation.</returns>
+    /// <param name="services">Service collection that receives the registration.</param>
+    /// <returns>The same service collection, so additional registrations can be chained.</returns>
     public static IServiceCollection AddCosmosContainerUtilAsSingleton(this IServiceCollection services)
     {
         services.AddCosmosContainerSetupUtilAsSingleton().TryAddSingleton<ICosmosContainerUtil, CosmosContainerUtil>();
