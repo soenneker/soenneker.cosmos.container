@@ -5,7 +5,7 @@
 
 # Soenneker.Cosmos.Container
 
-A utility library for storing Azure Cosmos containers Singleton IoC.
+Provides cached Azure Cosmos DB container handles plus list and delete operations.
 
 ## Install
 
@@ -13,34 +13,73 @@ A utility library for storing Azure Cosmos containers Singleton IoC.
 dotnet add package Soenneker.Cosmos.Container
 ```
 
-## Quick start
+## Configuration
+
+```json
+{
+  "Azure": {
+    "Cosmos": {
+      "Endpoint": "https://your-account.documents.azure.com:443/",
+      "AccountKey": "your-account-key",
+      "DatabaseName": "application",
+      "EnsureContainerOnFirstUse": true
+    }
+  }
+}
+```
+
+`EnsureContainerOnFirstUse` defaults to `true`. On the first `Get` for a container, the setup utility attempts to create it with partition key path `/partitionKey` before returning the SDK handle. Set it to `false` when infrastructure provisioning owns container creation or your containers use another partition key path.
+
+## Registration
 
 ```csharp
 using Soenneker.Cosmos.Container.Registrars;
-using Microsoft.Extensions.DependencyInjection;
 
-var services = new ServiceCollection();
-var result = services.AddCosmosContainerUtilAsSingleton();
+services.AddCosmosContainerUtilAsSingleton();
 ```
 
-Registers Cosmos Container Util with a singleton lifetime.
+The registration includes the client, database, and container-setup dependencies and intentionally uses a singleton lifetime.
 
-## What you get
+## Get a container
 
-- `ICosmosContainerUtil` — A utility library for storing Azure Cosmos containers Singleton IoC.
-- `CosmosContainerUtilRegistrar` — A utility library for storing Azure Cosmos containers.
+```csharp
+using Microsoft.Azure.Cosmos;
+using Soenneker.Cosmos.Container.Abstract;
 
-## API at a glance
+public sealed class OrderStore(ICosmosContainerUtil containers)
+{
+    public ValueTask<Container> Get(CancellationToken cancellationToken)
+    {
+        return containers.Get("orders", cancellationToken);
+    }
+}
+```
 
-| API | What it does | Result / important behavior |
-| --- | --- | --- |
-| `ICosmosContainerUtil.Get(containerName, cancellationToken)` | Implements double check locking mechanism. | A task whose result is the requested microsoft.Azure.Cosmos.Container. |
-| `ICosmosContainerUtil.Delete(containerName, cancellationToken)` | Removes the entry associated with the specified key. | Completes when the requested deletion has finished. |
-| `ICosmosContainerUtil.Delete(endpoint, accountKey, databaseName, containerName, cancellationToken)` | Removes the entry associated with the specified key. | Completes when the requested deletion has finished. |
-| `CosmosContainerUtilRegistrar.AddCosmosContainerUtilAsSingleton(services)` | Registers Cosmos Container Util with a singleton lifetime. | The same service collection, so additional registrations can be chained. |
+Use the explicit overload for another account or database:
 
-## Practical notes
+```csharp
+Container container = await containers.Get(
+    endpoint,
+    accountKey,
+    databaseName,
+    containerName,
+    cancellationToken);
+```
 
-- Cancellation stops pending work; it does not undo work that has already completed.
-- Calls that return a cached or singleton value reuse the same instance until the owning service is disposed.
-- Dispose instances you own when their scope ends so held resources can be released.
+Handles are cached by endpoint, a SHA-256 identity of the account key, database name, and container name. A rotated account key therefore receives a handle backed by the correct client without putting the raw key into the cache key.
+
+## List and delete
+
+```csharp
+IReadOnlyList<ContainerProperties> existing = await containers.GetAll(cancellationToken);
+await containers.Delete("obsolete", cancellationToken);
+```
+
+`GetAll` follows every Cosmos feed page and buffers all `ContainerProperties` in a list. `DeleteAll` lists the database and then deletes each container sequentially.
+
+## Operational notes
+
+- `Delete` and `DeleteAll` permanently remove Cosmos resources and their data. Scope credentials narrowly and do not expose these methods directly to untrusted input.
+- `Delete` obtains the cached handle before issuing the service deletion, then evicts that handle after success. A failed service deletion remains cached and the exception propagates.
+- Do not dispose returned `Container` handles. The singleton utilities own the underlying clients and caches.
+- Account keys are credentials. Store them in a secret provider and keep them out of logs and source control.

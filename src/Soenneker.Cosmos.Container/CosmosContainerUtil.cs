@@ -1,4 +1,7 @@
 ﻿using System.Collections.Generic;
+using System;
+using System.Security.Cryptography;
+using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
 using Microsoft.Azure.Cosmos;
@@ -70,7 +73,7 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
     public ValueTask<Microsoft.Azure.Cosmos.Container> Get(string endpoint, string accountKey, string databaseName, string containerName,
         CancellationToken cancellationToken = default)
     {
-        var key = new CosmosContainerKey(endpoint, databaseName, containerName);
+        CosmosContainerKey key = GetKey(endpoint, accountKey, databaseName, containerName);
         var args = new CosmosContainerArgs(endpoint, accountKey, databaseName, containerName);
 
         return _containers.Get(key, args, cancellationToken);
@@ -85,7 +88,7 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
     {
         _logger.LogCritical("Deleting container {container} in {database}! ...", containerName, databaseName);
 
-        var key = new CosmosContainerKey(endpoint, databaseName, containerName);
+        CosmosContainerKey key = GetKey(endpoint, accountKey, databaseName, containerName);
         var args = new CosmosContainerArgs(endpoint, accountKey, databaseName, containerName);
 
         Microsoft.Azure.Cosmos.Container container = await _containers.Get(key, args, cancellationToken)
@@ -145,6 +148,15 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
             await Delete(endpoint, accountKey, databaseName, props.Id, cancellationToken)
                 .NoSync();
         }
+    }
+
+    private static CosmosContainerKey GetKey(string endpoint, string accountKey, string databaseName, string containerName)
+    {
+        byte[] accountKeyHash = SHA256.HashData(Encoding.UTF8.GetBytes(accountKey));
+        return new CosmosContainerKey(endpoint, databaseName, containerName)
+        {
+            AccountKeyHash = Convert.ToHexString(accountKeyHash)
+        };
     }
 
     /// <summary>
