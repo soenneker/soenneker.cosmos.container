@@ -1,6 +1,5 @@
 ﻿using System.Collections.Generic;
 using System;
-using System.Security.Cryptography;
 using System.Text;
 using System.Threading;
 using System.Threading.Tasks;
@@ -17,12 +16,15 @@ using Soenneker.Dictionaries.SingletonKeys;
 using Soenneker.Extensions.Configuration;
 using Soenneker.Extensions.Task;
 using Soenneker.Extensions.ValueTask;
+using Soenneker.Hashing.Sha256;
 
 namespace Soenneker.Cosmos.Container;
 
 /// <inheritdoc cref="ICosmosContainerUtil"/>
 public sealed class CosmosContainerUtil : ICosmosContainerUtil
 {
+    private static readonly Sha256HashingUtil _sha256 = new();
+
     private readonly ILogger<CosmosContainerUtil> _logger;
     private readonly ICosmosDatabaseUtil _databaseUtil;
     private readonly ICosmosClientUtil _cosmosClientUtil;
@@ -152,7 +154,7 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
 
     private static CosmosContainerKey GetKey(string endpoint, string accountKey, string databaseName, string containerName)
     {
-        byte[] accountKeyHash = SHA256.HashData(Encoding.UTF8.GetBytes(accountKey));
+        byte[] accountKeyHash = _sha256.Hash(Encoding.UTF8.GetBytes(accountKey));
         return new CosmosContainerKey(endpoint, databaseName, containerName)
         {
             AccountKeyHash = Convert.ToHexString(accountKeyHash)
