@@ -34,6 +34,7 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
 
     private readonly string _defaultEndpoint;
     private readonly string _defaultAccountKey;
+    private readonly string _defaultAccountKeyHash;
     private readonly string _defaultDatabaseName;
 
     // 🔑 VALUE-TYPE KEY — no allocations per lookup
@@ -51,6 +52,7 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
 
         _defaultEndpoint = config.GetValueStrict<string>("Azure:Cosmos:Endpoint");
         _defaultAccountKey = config.GetValueStrict<string>("Azure:Cosmos:AccountKey");
+        _defaultAccountKeyHash = GetAccountKeyHash(_defaultAccountKey);
         _defaultDatabaseName = config.GetValueStrict<string>("Azure:Cosmos:DatabaseName");
 
         // method group → no closure
@@ -152,18 +154,20 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
         }
     }
 
-    private static CosmosContainerKey GetKey(string endpoint, string accountKey, string databaseName, string containerName)
+    private CosmosContainerKey GetKey(string endpoint, string accountKey, string databaseName, string containerName)
     {
-        byte[] accountKeyHash = _sha256.Hash(Encoding.UTF8.GetBytes(accountKey));
         return new CosmosContainerKey(endpoint, databaseName, containerName)
         {
-            AccountKeyHash = Convert.ToHexString(accountKeyHash)
+            AccountKeyHash = accountKey == _defaultAccountKey ? _defaultAccountKeyHash : GetAccountKeyHash(accountKey)
         };
     }
 
     /// <summary>
     /// Releases resources used by the current instance.
     /// </summary>
+    private static string GetAccountKeyHash(string accountKey) =>
+        Convert.ToHexString(_sha256.Hash(Encoding.UTF8.GetBytes(accountKey)));
+
     public void Dispose() => _containers.Dispose();
 
     /// <summary>
