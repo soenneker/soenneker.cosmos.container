@@ -42,7 +42,7 @@
     </ItemGroup>
 
     <ItemGroup>
-        <PackageReference Include="Soenneker.Cosmos.Container.Setup" Version="4.0.2455" />
+        <PackageReference Include="Soenneker.Cosmos.Container.Setup" Version="4.0.2457" />
         <PackageReference Include="Soenneker.Hashing.Sha256" Version="4.0.4" />
     </ItemGroup>
 </Project>
