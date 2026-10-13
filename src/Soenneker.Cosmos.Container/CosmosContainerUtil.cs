@@ -50,10 +50,10 @@ public sealed class CosmosContainerUtil : ICosmosContainerUtil
 
         _ensureContainerOnFirstUse = config.GetValue("Azure:Cosmos:EnsureContainerOnFirstUse", true);
 
-        _defaultEndpoint = config.GetValueStrict<string>("Azure:Cosmos:Endpoint");
-        _defaultAccountKey = config.GetValueStrict<string>("Azure:Cosmos:AccountKey");
+        _defaultEndpoint = config.GetStringStrict("Azure:Cosmos:Endpoint");
+        _defaultAccountKey = config.GetStringStrict("Azure:Cosmos:AccountKey");
         _defaultAccountKeyHash = GetAccountKeyHash(_defaultAccountKey);
-        _defaultDatabaseName = config.GetValueStrict<string>("Azure:Cosmos:DatabaseName");
+        _defaultDatabaseName = config.GetStringStrict("Azure:Cosmos:DatabaseName");
 
         // method group → no closure
         _containers = new SingletonKeyDictionary<CosmosContainerKey, Microsoft.Azure.Cosmos.Container, CosmosContainerArgs>(CreateContainer);
